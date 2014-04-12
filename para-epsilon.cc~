@@ -5,17 +5,18 @@
 
 using namespace std;
 
+double MIN( double i, double j) { if(i<j) return i; return j; }
+
+
 int main(int argc, char ** argv) {
     
     int rank, size;
-    char name[80];
-    int length; 
+    
     int nodes, edges;
     int source = 0;
+    int sink;
     double **capacity; // = new float[n]();
-    double **flow;
-    double *excess;
-   // double *height;
+    // double *height;
     int numOfSlaves = 4;
     MPI_Init(&argc, &argv); // note that argc and argv are passed
                             // by address
@@ -26,6 +27,9 @@ int main(int argc, char ** argv) {
 
 
     if(rank==0){	// master, read graph;
+   
+	double **flow;
+    	double *excess;
    
 	int n1,n2,n3;
 
@@ -56,6 +60,9 @@ int main(int argc, char ** argv) {
 	}
 
 	cout << "file read";
+	
+
+	f.close();
 
 	excess[source] = INFINITE;
 
@@ -98,10 +105,59 @@ int main(int argc, char ** argv) {
 	}*/
 	// send flow matrix
 	
-	f.close();
+
+	// get flow and excess
+	int got = 0;
+	while(got<nodes){
+		double t11[2];
+		MPI_Recv(t11, 2, MPI_DOUBLE, MPI_ANY_SOURCE, 4 ,MPI_COMM_WORLD);
+		excess[t11[0]] = t11[1];
+		double t12[nodes];
+		MPI_Recv(t12,nodes, MPI_DOUBLE, MPI_ANY_SOURCE, 5, MPI_COMM_WORLD):
+		flow[t11[0]] = &t12; // copy or reference copy ?
+	
+
+	}
+
+	// up interation
+	int maxflow = 0;
+	for(int i=0; i< nodes; i++)
+	{
+		for(int j=0; j< nodes; j++)
+		{	
+			if(capacity[i][j]!=0)
+			{
+				double delta = MIN((capacity[i][j] - flow[i][j]), excess[i]);
+				flow[i][j] += delta;
+				flow[j][i] -= delta;
+				excess[i] -= delta;
+				excess[j] += delta;
+			}
+		}
+
+		if(i==sink){
+
+			for(int k = 0;k< nodes; k++)
+			{
+				if(flow[i][k]!=0) 
+					maxflow += flow[i][k];
+			}
+		}
+	}
+
+	cout << "Maxflow is  " << maxflow;
+
+
+
     }
 
     else{	// slave nodes
+
+	MPI_Bcast(nodes, 1, MPI_DOUBLE, rank, MPI_COMM_WORLD);
+
+
+	MPI_Bcast(&capacitystring[0], capacitystring.size(), MPI_CHAR, rank, MPI_COMM_WORLD);
+	MPI_Bcast(&flowstring[0], flowstring.size(), MPI_CHAR, rank, MPI_COMM_WORLD);
 
 	// receive number of nodes
 
@@ -132,13 +188,35 @@ int main(int argc, char ** argv) {
 	string bla1(buf, l);
 	delete [] buf;
 
-	// generate push list
+	// parse capacity and flow to get [][]
+	int excess = 0;
+	for(int i = 1; i<rank; i++)
+	{
+		if( capacity[i][rank] != 0 ) {
+			double t;
+			MPI_Receive(t,1,MPI_DOUBLE, i, 2, MPI_COMM_WORLD);
+			flow[i] = t;
+			excess += t;
+		}	
+	}
 
-	// get edge from push list
-
-	//  
-
-	
+	for(int i = rank+1; i<sink;i++)
+	{
+		if ( capacity[rank][i] != 0 && excess != 0 )
+		{
+			push_flow = MIN( capacity[rank][i] , excess )
+			flow[i] = push_flow;
+			excess -= push_flow;
+			MPI_Send(push_flow, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD)
+		}
+	}
+		send updated flow and excess information to master process
+	double excess1[2];
+	excess1[0] = rank;
+	excess1[1] = excess;
+	MPI_Send(excess1, 2, MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);	
+	MPI_Send(flow, flow.length, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
+		
 
 
     }
