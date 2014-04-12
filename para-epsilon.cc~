@@ -103,12 +103,6 @@ int main(int argc, char ** argv) {
 
     else{	// slave nodes
 
-	MPI_Bcast(nodes, 1, MPI_DOUBLE, rank, MPI_COMM_WORLD);
-
-
-	MPI_Bcast(&capacitystring[0], capacitystring.size(), MPI_CHAR, rank, MPI_COMM_WORLD);
-	MPI_Bcast(&flowstring[0], flowstring.size(), MPI_CHAR, rank, MPI_COMM_WORLD);
-
 	// receive number of nodes
 
 	MPI_Recv(nodes, 1, MPI_DOUBLE, 0,0,MPI_COMM_WORLD);
