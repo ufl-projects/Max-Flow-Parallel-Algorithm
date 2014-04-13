@@ -5,7 +5,7 @@
 #include "mpi.h"
 
 
-#define NODES 5
+#define NODES 7
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 #define INFINITE 10000000
 
@@ -57,7 +57,7 @@ int main(int argc, char ** argv) {
 	
 	int nodes = 0;
         int source = 0;
-        int sink = 5;
+        int sink = 6;
         
 	/*capacity = (double **) calloc(NODES, sizeof(double*));
 	flow = (double **) calloc(NODES, sizeof(double*));
@@ -98,6 +98,7 @@ int main(int argc, char ** argv) {
                 double t;
 		MPI_Recv(&t,1,MPI_DOUBLE, i, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                 slaveFlow[i] = t;
+		//cout << slaveFlow[i] << "\n";
                 excess += t;
 		cout << rank << ": Received Initial Flow from " << i << " = " << t << "\n";     
             }
@@ -108,7 +109,8 @@ int main(int argc, char ** argv) {
             if ( capacity[rank][i] != 0 && excess != 0 )
             {
                 push_flow = MIN( capacity[rank][i] , excess );
-                slaveFlow[i] = push_flow;
+                slaveFlow[i] = push_flow*(-1);
+		//cout << slaveFlow[i] << "\n";
                 excess -= push_flow;
                 MPI_Send(&push_flow, 1, MPI_DOUBLE, i, 2, MPI_COMM_WORLD);
             }
@@ -123,9 +125,10 @@ int main(int argc, char ** argv) {
         sendExcess[1] = excess;
         MPI_Send(&sendExcess[0], 2, MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);
         MPI_Send(&slaveFlow[0],nodes, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
-	for(int i=0; i< nodes; i++)
-        { cout << slaveFlow[i] << "\t"; }
-	cout << "\n";
+	string t1;
+	//for(int i=0; i< nodes; i++)
+        //{ cout << slaveFlow[i] << "\t";  }
+	//cout << t1 << "\n";
 	
     }
     //Master Process
@@ -146,7 +149,7 @@ int main(int argc, char ** argv) {
    double **flow, **capacity,*excess;
     int i,nodes,edges;
     int source = 0;
-    int sink = 4;
+    int sink = 6;
     nodes=NODES;
 	
 	capacity = alloc_2d_int(nodes, nodes);	
@@ -164,13 +167,16 @@ int main(int argc, char ** argv) {
 
 
 	//Sample graph
-    capacity[0][1] = 3;
+    /*capacity[0][1] = 3;
     capacity[0][2] = 3;
     capacity[1][3] = 1;
     capacity[1][4] = 1;
     capacity[2][3] = 2;
-    capacity[3][4] = 2;
+    capacity[3][4] = 2;*/
     //capacity[4][5] = 4;
+
+	capacity[0][1] = 3; capacity[0][3] = 3; capacity[1][2] = 4; capacity[2][0] = 3; capacity[2][3] = 1; capacity[2][4] = 2; capacity[3][4] = 2; capacity[3][5] = 6; capacity[4][1] = 1; capacity[4][6] = 1; capacity[5][6] = 9;
+
 
         //
         //Initialize excess map
@@ -236,9 +242,13 @@ int main(int argc, char ** argv) {
 	excess[ndex] = excess12;
             double receivedFlow[nodes];
             MPI_Recv(&receivedFlow,nodes, MPI_DOUBLE, MPI_ANY_SOURCE, 5, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-            flow[ndex] = &receivedFlow[0]; // copy or reference copy ?
-//           	cout << flow[ndex] << "\n"; 
-	   got++;
+            //flow[ndex] = &receivedFlow[0]; // copy or reference copy ?
+	  //     	cout << flow[ndex] << "\n"; 
+	   
+	for(int i=0; i< nodes; i++)
+        { flow[ndex][i] = receivedFlow[i]; }
+
+		got++;
 	    cout << "Master: Received final Flow and excess from " << rank << "\n"; 
 
         }
@@ -262,8 +272,7 @@ int main(int argc, char ** argv) {
             }
 
             if(i==sink){
-
-                for(int k = 0;k< nodes; k++)
+		for(int k = 0;k< nodes; k++)
                 {
                     if(flow[i][k]!=0)
                         maxflow += flow[i][k];
@@ -273,11 +282,13 @@ int main(int argc, char ** argv) {
 
         cout << "Maxflow is  " << maxflow << "\n";
 
-	printMatrix(capacity); cout <<"\n";
+	//printMatrix(flow); cout << "\n";
+
+	/*printMatrix(capacity); cout <<"\n";
 	printMatrix(flow); cout << "\n";
 	for(int i=0; i< nodes; i++)
         { cout << excess[i] << "\t"; }
-	cout << "\n";
+	cout << "\n";*/
 
     }
 
