@@ -97,7 +97,7 @@ int main(int argc, char ** argv) {
 	    if( capacity[i][rank] != 0 ) {
                 double t;
 		MPI_Recv(&t,1,MPI_DOUBLE, i, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-                slaveFlow[i] = t;
+                slaveFlow[i] = (-t);
 		//cout << slaveFlow[i] << "\n";
                 excess += t;
 		cout << rank << ": Received Initial Flow from " << i << " = " << t << "\n";     
@@ -109,7 +109,7 @@ int main(int argc, char ** argv) {
             if ( capacity[rank][i] != 0 && excess != 0 )
             {
                 push_flow = MIN( capacity[rank][i] , excess );
-                slaveFlow[i] = push_flow*(-1);
+                slaveFlow[i] = push_flow;
 		//cout << slaveFlow[i] << "\n";
                 excess -= push_flow;
                 MPI_Send(&push_flow, 1, MPI_DOUBLE, i, 2, MPI_COMM_WORLD);
@@ -223,7 +223,8 @@ int main(int argc, char ** argv) {
 		
 		if(flow[0][i]!=0){		
 			double t13 = flow[0][i];
-			//cout << t13 << "\t";			
+			//cout << t13 << "\t";	
+			//flow[i][0] = -t13;		
 			MPI_Send(&t13, 1, MPI_DOUBLE, i, 2, MPI_COMM_WORLD);
 		}
 	}
@@ -282,7 +283,7 @@ int main(int argc, char ** argv) {
 
         cout << "Maxflow is  " << maxflow << "\n";
 
-	//printMatrix(flow); cout << "\n";
+	printMatrix(flow); cout << "\n";
 
 	/*printMatrix(capacity); cout <<"\n";
 	printMatrix(flow); cout << "\n";
