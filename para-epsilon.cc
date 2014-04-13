@@ -130,9 +130,9 @@ int main(void) {
     double **flow, **capacity,*excess;
     int i,nodes,edges;
     int source = 0;
-    int sink=5;
+    int sink = 5;
     nodes=NODES;
-
+	
 
 
     capacity = (double **) calloc(NODES, sizeof(double*));
@@ -149,56 +149,31 @@ int main(void) {
         double excess=0,push_flow=0;
 
         MPI_Bcast(&nodes,1, MPI_INT, rank, MPI_COMM_WORLD);
+	cout <<  "My nodes " << nodes << "\n";
+        MPI_Bcast(&(capacity[0][0]),nodes*nodes, MPI_DOUBLE, rank, MPI_COMM_WORLD);
+        MPI_Bcast(&(flow[0][0]), nodes*nodes, MPI_DOUBLE, rank, MPI_COMM_WORLD);
 
-        //MPI_Bcast(&capacitystring[0], (int)capacitystring.size(), MPI_CHAR, rank, MPI_COMM_WORLD);
-        MPI_Bcast(&capacity,nodes*nodes, MPI_CHAR, rank, MPI_COMM_WORLD);
-        MPI_Bcast(&flow, nodes*nodes, MPI_CHAR, rank, MPI_COMM_WORLD);
-        double* slaveFlow = new double[nodes+1];
+	cout << rank << ": Received Capacity and Flow matrices \n";        
 
-        /*
-        // receive number of nodes
-
-        MPI_Recv(&nodes, 1, MPI_INT, 0,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-
-        // receive capacity matrix
-        string capacitystring;
-        MPI_Status status;
-        MPI_Probe(0, 0,MPI_COMM_WORLD,&status);
-        int l;
-        MPI_Get_count(&status, MPI_CHAR, &l);
-        char *buf = new char[l];
-        MPI_Recv(buf, l, MPI_CHAR, 0, 1, MPI_COMM_WORLD, &status);
-        string bla1(buf, l);
-        delete [] buf;
-
-        {
-        // receive flow matrix
-
-        string flowstring;
-        MPI_Status status;
-        MPI_Probe(0, 0,MPI_COMM_WORLD,&status);
-        int l;
-        MPI_Get_count(&status, MPI_CHAR, &l);
-        char *buf = new char[l];
-        MPI_Recv(buf, l, MPI_CHAR, 0, 1, MPI_COMM_WORLD, &status);
-        string bla1(buf, l);
-        delete [] buf;
-        }
-         */
-
+	//cout << "Capacity \n";
+	//printMatrix(capacity);
+	//printMatrix(flow);
+	double* slaveFlow = new double[nodes+1]();
+	
         //Receive excess from adjacent nodes
-
+	//cout << "Outside for";
         for(int i = 0; i<rank; i++)
         {
-            if( capacity[i][rank] != 0 ) {
+	    if( capacity[i][rank] != 0 ) {
                 double t;
-                MPI_Recv(&t,1,MPI_DOUBLE, i, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+		MPI_Recv(&t,1,MPI_DOUBLE, i, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                 slaveFlow[i] = t;
                 excess += t;
+		cout << rank << ": Received Initial Flow from " << i << " = " << t << "\n";     
             }
         }
-
-        for(int i = rank+1; i<sink;i++)
+	
+        /*for(int i = rank+1; i<sink; i++)
         {
             if ( capacity[rank][i] != 0 && excess != 0 )
             {
@@ -207,8 +182,8 @@ int main(void) {
                 excess -= push_flow;
                 MPI_Send(&push_flow, 1, MPI_DOUBLE, i, 2, MPI_COMM_WORLD);
             }
-        }
-
+        }*/
+	/*
 
         double sendExcess[2];
         sendExcess[0] = rank;
@@ -216,7 +191,7 @@ int main(void) {
         MPI_Send(sendExcess, 2, MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);
         MPI_Send(slaveFlow,nodes, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
 
-
+	*/
     }
     //Master Process
     else{
@@ -232,41 +207,43 @@ int main(void) {
         f >> nodes >> edges;
          */
 
+
+	//Sample graph
+    capacity[0][1] = 2;
+    capacity[0][2] = 9;
+    capacity[1][2] = 1;
+    capacity[1][3] = 0;
+    capacity[1][4] = 0;
+    capacity[2][4] = 7;
+    capacity[3][5] = 7;
+    capacity[4][5] = 4;
+
         //flow = (double **) calloc(NODES, sizeof(double*));
         //Initialize excess map
+
+
+	//printf("Capacity:\n");
+    	//printMatrix(capacity);
+
+    //printf("Max Flow:\n%d\n", pushRelabel(capacity, flow, 0, 5));
 
         excess[source] = INFINITE;
 
         //Preflow
 
 
-        for(int i=1;i<NODES;i++) {		// preflow operation , (height, execess, flow)
+        for(int i=0;i<NODES;i++) {		// preflow operation , (height, execess, flow)
 
-            //string tmp1;
-            //string tmp2;
-
-            for(int j=1;j<NODES;j++) {
+            for(int j=0;j<NODES;j++) {
 
                 if(i==source){
                     flow[i][j] = capacity[i][j];
                 }
-                /*
-                stringstream sstm; sstm << capacity[i][j]; string ans = sstm.str();
-                tmp1.append(ans);
-                tmp1.append(",");
-
-                stringstream sstm1; sstm1 << capacity[i][j]; string ans1 = sstm1.str();
-                tmp2.append(ans1);
-                tmp2.append(",");
-            }
-            capacitystring.append(tmp1);
-            capacitystring.append("\n");
-            flowstring.append(tmp2);
-            flowstring.append("\n");
-                 */
-        }
+       	    }
         }
 
+	//printf("Flows:\n");
+   	printMatrix(flow);
 
         //Broadcast capacity and preflow matrix to all slaves
 
@@ -274,8 +251,21 @@ int main(void) {
         MPI_Bcast(&nodes,1, MPI_INT, rank, MPI_COMM_WORLD);
 
         //MPI_Bcast(&capacitystring[0], (int)capacitystring.size(), MPI_CHAR, rank, MPI_COMM_WORLD);
-        MPI_Bcast(&capacity,nodes*nodes, MPI_CHAR, rank, MPI_COMM_WORLD);
-        MPI_Bcast(&flow, nodes*nodes, MPI_CHAR, rank, MPI_COMM_WORLD);
+        MPI_Bcast(&(capacity[0][0]),nodes*nodes, MPI_CHAR, rank, MPI_COMM_WORLD);
+        MPI_Bcast(&(flow[0][0]), nodes*nodes, MPI_CHAR, rank, MPI_COMM_WORLD);
+
+	cout << "Master: Broadcasted Capacity and Flow matrices \n"; // << flow[0][0];
+
+	for(int i=1;i<nodes;i++){
+		
+		if(flow[0][i]!=0){		
+			double t13 = flow[0][i];
+			//cout << t13 << "\t";			
+			MPI_Send(&t13, 1, MPI_DOUBLE, i, 2, MPI_COMM_WORLD);
+		}
+	}
+
+	cout << "Master: Sent initial flow\n";
 
         int got = 0;
         while(got<nodes){
@@ -321,24 +311,6 @@ int main(void) {
 
 
 
-
-    //Sample graph
-    capacity[0][1] = 2;
-    capacity[0][2] = 9;
-    capacity[1][2] = 1;
-    capacity[1][3] = 0;
-    capacity[1][4] = 0;
-    capacity[2][4] = 7;
-    capacity[3][5] = 7;
-    capacity[4][5] = 4;
-
-    printf("Capacity:\n");
-    printMatrix(capacity);
-
-    //printf("Max Flow:\n%d\n", pushRelabel(capacity, flow, 0, 5));
-
-    printf("Flows:\n");
-    printMatrix(flow);
 
 
     MPI_Finalize();
