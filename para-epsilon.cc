@@ -75,7 +75,7 @@ int main(int argc, char ** argv) {
 	flow = alloc_2d_int(nodes, nodes);
 
 
-	cout <<  "My nodes " << nodes << "\n";
+	//cout <<  "My nodes " << nodes << "\n";
 	MPI_Barrier(MPI_COMM_WORLD);
        	MPI_Bcast(&(capacity[0][0]),nodes*nodes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Bcast(&(flow[0][0]), nodes*nodes, MPI_DOUBLE, rank, MPI_COMM_WORLD);
@@ -116,12 +116,13 @@ int main(int argc, char ** argv) {
 		if(excess==0) MPI_Send(&excess, 1, MPI_DOUBLE, i, 2, MPI_COMM_WORLD);
         }
 	
+	cout << rank << ": Now sending final flow and excess to Master" << "\n"; 
 
         double sendExcess[2];
         sendExcess[0] = rank;
         sendExcess[1] = excess;
-        MPI_Send(sendExcess, 2, MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);
-        MPI_Send(slaveFlow,nodes, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
+        MPI_Send(&sendExcess[0], 2, MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);
+        MPI_Send(&slaveFlow[0],nodes, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
 
 	
     }
@@ -148,7 +149,7 @@ int main(int argc, char ** argv) {
 	
 	capacity = alloc_2d_int(nodes, nodes);	
 	flow = alloc_2d_int(nodes, nodes);
-
+	excess = (double*) calloc(NODES, sizeof(double));
     /*capacity = (double **) calloc(NODES, sizeof(double*));
     flow = (double **) calloc(NODES, sizeof(double*));
 
@@ -196,7 +197,7 @@ int main(int argc, char ** argv) {
 	
 	//printf("Flows:\n");
    	//printMatrix(flow);
-	cout << "MyNides " << nodes;
+	//cout << "MyNides " << nodes;
         //Broadcast capacity and preflow matrix to all slaves
 
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -223,18 +224,24 @@ int main(int argc, char ** argv) {
 	cout << "Master: Sent initial flow\n";
 	
         int got = 0;
-        while(got<nodes){
+        while(got<nodes-1){
 
             double receivedExcess[2];
-            MPI_Recv(receivedExcess, 2, MPI_DOUBLE, MPI_ANY_SOURCE, 4 ,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-            excess[(int)receivedExcess[0]] = receivedExcess[1];
+		cout << "Receiving ";
+            MPI_Recv(&receivedExcess, 2, MPI_DOUBLE, MPI_ANY_SOURCE, 4 ,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+	int ndex = (int)receivedExcess[0];         
+	double excess12 = receivedExcess[1];
+	
+	excess[ndex] = excess12;
             double receivedFlow[nodes];
-            MPI_Recv(receivedFlow,nodes, MPI_DOUBLE, MPI_ANY_SOURCE, 5, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-            flow[(int)receivedFlow[0]] = receivedFlow; // copy or reference copy ?
-            got++;
+            MPI_Recv(&receivedFlow,nodes, MPI_DOUBLE, MPI_ANY_SOURCE, 5, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+            flow[ndex] = receivedFlow; // copy or reference copy ?
+//           	cout << flow[ndex] << "\n"; 
+	   got++;
+	    cout << "Master: Received final Flow and excess from " << rank << "\n"; 
 
         }
-	/*
+	
         //Discharge:
         int maxflow = 0;
         for(int i=0; i< nodes; i++)
@@ -261,7 +268,7 @@ int main(int argc, char ** argv) {
             }
         }
 
-        cout << "Maxflow is  " << maxflow;*/
+        cout << "Maxflow is  " << maxflow;
     }
 
 
