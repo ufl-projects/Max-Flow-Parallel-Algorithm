@@ -20,6 +20,17 @@ void printMatrix(const double * const * M) {
     }
 }
 
+
+double **alloc_2d_int(int rows, int cols) {
+    double *data = (double *)calloc(rows*cols, sizeof(double));
+    double **array= (double **)calloc(rows,sizeof(double*));
+    for (int i=0; i<rows; i++)
+        array[i] = &(data[cols*i]);
+
+    return array;
+}
+
+
 int main(int argc, char ** argv) {
 
     // Initialize the MPI environment
@@ -43,35 +54,40 @@ int main(int argc, char ** argv) {
         double excess=0,push_flow=0;
 
 	double **flow, **capacity;
-        int nodes = 0;
+	
+	int nodes = 0;
         int source = 0;
         int sink = 5;
         
-	capacity = (double **) calloc(NODES, sizeof(double*));
+	/*capacity = (double **) calloc(NODES, sizeof(double*));
 	flow = (double **) calloc(NODES, sizeof(double*));
 
 	for (int i = 0; i < NODES; i++) {
         	flow[i] = (double *) calloc(NODES, sizeof(double));
         	capacity[i] = (double *) calloc(NODES, sizeof(double));
-    	}
+    	}*/
 
 	MPI_Barrier(MPI_COMM_WORLD);	
         MPI_Bcast(&nodes,1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Barrier(MPI_COMM_WORLD);
 
+	capacity = alloc_2d_int(nodes, nodes);	
+	flow = alloc_2d_int(nodes, nodes);
+
+
 	cout <<  "My nodes " << nodes << "\n";
 	MPI_Barrier(MPI_COMM_WORLD);
        	MPI_Bcast(&(capacity[0][0]),nodes*nodes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&(flow[0][0]), nodes*nodes, MPI_DOUBLE, rank, MPI_COMM_WORLD);
 	MPI_Barrier(MPI_COMM_WORLD);
 
-//        MPI_Bcast(&(flow[0][0]), nodes*nodes, MPI_DOUBLE, rank, MPI_COMM_WORLD);
 
 	cout << rank << ": Received Capacity and Flow matrices \n";        
 	
 	//cout << "Capacity \n";
-	printMatrix(capacity);
+	//printMatrix(capacity);
 	//printMatrix(flow);
-	/*	
+		
 	double* slaveFlow = new double[nodes+1]();
 	
         //Receive excess from adjacent nodes
@@ -85,7 +101,7 @@ int main(int argc, char ** argv) {
                 excess += t;
 		cout << rank << ": Received Initial Flow from " << i << " = " << t << "\n";     
             }
-        }*/
+        }
 	
         /*for(int i = rank+1; i<sink; i++)
         {
@@ -128,15 +144,16 @@ int main(int argc, char ** argv) {
     int sink = 5;
     nodes=NODES;
 	
+	capacity = alloc_2d_int(nodes, nodes);	
+	flow = alloc_2d_int(nodes, nodes);
 
-
-    capacity = (double **) calloc(NODES, sizeof(double*));
+    /*capacity = (double **) calloc(NODES, sizeof(double*));
     flow = (double **) calloc(NODES, sizeof(double*));
 
     for (i = 0; i < NODES; i++) {
         flow[i] = (double *) calloc(NODES, sizeof(double));
         capacity[i] = (double *) calloc(NODES, sizeof(double));
-    }
+    }*/
 
 
 
@@ -156,7 +173,7 @@ int main(int argc, char ** argv) {
 
 
 	//printf("Capacity:\n");
-    	printMatrix(capacity);
+    	//printMatrix(capacity);
 
     //printf("Max Flow:\n%d\n", pushRelabel(capacity, flow, 0, 5));
 
@@ -186,12 +203,12 @@ int main(int argc, char ** argv) {
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Bcast(&(capacity[0][0]),nodes*nodes, MPI_DOUBLE, rank, MPI_COMM_WORLD);
+	MPI_Bcast(&(flow[0][0]), nodes*nodes, MPI_CHAR, rank, MPI_COMM_WORLD);
 	MPI_Barrier(MPI_COMM_WORLD);
 
- //       MPI_Bcast(&(flow[0][0]), nodes*nodes, MPI_CHAR, rank, MPI_COMM_WORLD);
-
+ //       
 	cout << "Master: Broadcasted Capacity and Flow matrices \n"; // << flow[0][0];
-	/*
+	
 	for(int i=1;i<nodes;i++){
 		
 		if(flow[0][i]!=0){		
@@ -202,7 +219,7 @@ int main(int argc, char ** argv) {
 	}
 
 	cout << "Master: Sent initial flow\n";
-
+	/*
         int got = 0;
         while(got<nodes){
 
