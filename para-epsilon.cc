@@ -5,7 +5,7 @@
 #include "mpi.h"
 
 
-#define NODES 6
+#define NODES 5
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 #define INFINITE 10000000
 
@@ -123,7 +123,9 @@ int main(int argc, char ** argv) {
         sendExcess[1] = excess;
         MPI_Send(&sendExcess[0], 2, MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);
         MPI_Send(&slaveFlow[0],nodes, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
-
+	for(int i=0; i< nodes; i++)
+        { cout << slaveFlow[i] << "\t"; }
+	cout << "\n";
 	
     }
     //Master Process
@@ -144,7 +146,7 @@ int main(int argc, char ** argv) {
    double **flow, **capacity,*excess;
     int i,nodes,edges;
     int source = 0;
-    int sink = 5;
+    int sink = 4;
     nodes=NODES;
 	
 	capacity = alloc_2d_int(nodes, nodes);	
@@ -162,14 +164,13 @@ int main(int argc, char ** argv) {
 
 
 	//Sample graph
-    capacity[0][1] = 2;
-    capacity[0][2] = 9;
-    capacity[1][2] = 1;
-    capacity[1][3] = 4;
-    capacity[1][4] = 5;
-    capacity[2][4] = 7;
-    capacity[3][5] = 7;
-    capacity[4][5] = 4;
+    capacity[0][1] = 3;
+    capacity[0][2] = 3;
+    capacity[1][3] = 1;
+    capacity[1][4] = 1;
+    capacity[2][3] = 2;
+    capacity[3][4] = 2;
+    //capacity[4][5] = 4;
 
         //
         //Initialize excess map
@@ -235,12 +236,14 @@ int main(int argc, char ** argv) {
 	excess[ndex] = excess12;
             double receivedFlow[nodes];
             MPI_Recv(&receivedFlow,nodes, MPI_DOUBLE, MPI_ANY_SOURCE, 5, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-            flow[ndex] = receivedFlow; // copy or reference copy ?
+            flow[ndex] = &receivedFlow[0]; // copy or reference copy ?
 //           	cout << flow[ndex] << "\n"; 
 	   got++;
 	    cout << "Master: Received final Flow and excess from " << rank << "\n"; 
 
         }
+
+	printMatrix(flow); cout << "\n";
 	
         //Discharge:
         int maxflow = 0;
@@ -268,7 +271,14 @@ int main(int argc, char ** argv) {
             }
         }
 
-        cout << "Maxflow is  " << maxflow;
+        cout << "Maxflow is  " << maxflow << "\n";
+
+	printMatrix(capacity); cout <<"\n";
+	printMatrix(flow); cout << "\n";
+	for(int i=0; i< nodes; i++)
+        { cout << excess[i] << "\t"; }
+	cout << "\n";
+
     }
 
 
