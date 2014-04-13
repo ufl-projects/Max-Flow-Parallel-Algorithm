@@ -804,25 +804,25 @@ int main(void) {
 
          while (p < NODES - 2) {
 
-		cout << "DOne";
+	cout << "DOne";
 
-		 int u = list[p];
+         int u = list[p];
 
-		 int old_height = height[u];
+         int old_height = height[u];
 
-		 discharge(capacity, flow, excess,height, seen, u);
+         discharge(capacity, flow, excess,height, seen, u);
 
-		 if (height[u] > old_height) {
+         if (height[u] > old_height) {
 
-			 moveToFront(p,list);
+         moveToFront(p,list);
 
-			 p=0;
+         p=0;
 
-		 }
+         }
 
-		 else
+         else
 
-		 	p += 1;
+         p += 1;
 
          }
 
