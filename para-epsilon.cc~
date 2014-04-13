@@ -231,16 +231,17 @@ int main(int argc, char ** argv) {
 
 	cout << "Master: Sent initial flow\n";
 	
-        int got = 0;
-        while(got<nodes-1){
+        int got = 1;
+        while(got<nodes){
 
             double receivedExcess[2];
 		cout << "Receiving ";
-            MPI_Recv(&receivedExcess, 2, MPI_DOUBLE, MPI_ANY_SOURCE, 4 ,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+            MPI_Recv(&receivedExcess, 2, MPI_DOUBLE, got, 4 ,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 	int ndex = (int)receivedExcess[0];         
 	double excess12 = receivedExcess[1];
 	
 	excess[ndex] = excess12;
+	cout << "Master: Received excess " << got << " = " << excess12 << "\n"; 
             double receivedFlow[nodes];
             MPI_Recv(&receivedFlow,nodes, MPI_DOUBLE, MPI_ANY_SOURCE, 5, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
             //flow[ndex] = &receivedFlow[0]; // copy or reference copy ?
@@ -253,11 +254,11 @@ int main(int argc, char ** argv) {
 	    cout << "Master: Received final Flow and excess from " << rank << "\n"; 
 
         }
-
+	printMatrix(capacity); cout << "\n";
 	printMatrix(flow); cout << "\n";
 	
         //Discharge:
-        int maxflow = 0;
+        /*int maxflow = 0;
         for(int i=0; i< nodes; i++)
         {
             for(int j=0; j< nodes; j++)
@@ -279,17 +280,17 @@ int main(int argc, char ** argv) {
                         maxflow += flow[i][k];
                 }
             }
-        }
+        }*/
 
         cout << "Maxflow is  " << maxflow << "\n";
 
 	//printMatrix(flow); cout << "\n";
 
 	/*printMatrix(capacity); cout <<"\n";
-	printMatrix(flow); cout << "\n";
+	printMatrix(flow); cout << "\n";*/
 	for(int i=0; i< nodes; i++)
         { cout << excess[i] << "\t"; }
-	cout << "\n";*/
+	cout << "\n";
 
     }
 
