@@ -301,3 +301,103 @@ int main(int argc, char ** argv) {
     MPI_Finalize();
     return 0;
 }
+
+
+/*
+
+//Sample graph
+
+        
+
+         capacity[0][1] = 1;
+
+         capacity[0][2] = 2;
+
+         capacity[1][2] = 1;
+
+         capacity[1][3] = 0;
+
+         capacity[1][4] = 0;
+
+         capacity[2][4] = 7;
+
+         capacity[3][5] = 7;
+
+         capacity[4][5] = 4;
+
+         
+
+        capacity[0][1] = 3;
+
+        capacity[0][3] = 3;
+
+        capacity[1][2] = 4;
+
+        capacity[2][0] = 3;
+
+        capacity[2][3] = 1;
+
+        capacity[2][4] = 2;
+
+        capacity[3][4] = 2;
+
+        capacity[3][5] = 6;
+
+        capacity[4][1] = 1;
+
+        capacity[4][6] = 1;
+
+        capacity[5][6] = 9;
+
+        
+
+         capacity[1][2] = 3;
+
+         capacity[1][3] = 3;
+
+         capacity[2][4] = 1;
+
+         capacity[2][5] = 1;
+
+         capacity[3][4] = 2;
+
+         capacity[4][5] = 2;
+
+         
+
+         
+
+         capacity[0][1] = 1;
+
+         capacity[0][2] = 2;
+
+         capacity[1][2] = 1;
+
+         capacity[1][3] = 0;
+
+         capacity[1][4] = 0;
+
+         capacity[2][4] = 7;
+
+         capacity[3][5] = 7;
+
+         capacity[4][5] = 4;
+
+
+
+//Print slaveFlow
+
+        
+/*
+         for(int j = 0; j < NODES; j++) {
+
+         	printf("%f\t", slaveFlow[j]);
+
+         }
+*/
+	 
+
+
+
+         */
+
