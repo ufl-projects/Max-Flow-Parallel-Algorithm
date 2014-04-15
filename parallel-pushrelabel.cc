@@ -12,9 +12,9 @@
 
 
 
-#define NODES 6
+//#define NODES 6
 
-#define SINK 5
+//#define SINK 5
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
@@ -174,9 +174,9 @@ int main(void) {
 
     int nodes,edges;
 
-    int source = 0;
+    int source;
 
-    int sink=SINK;
+    int sink;
 
     //nodes=NODES;
 
@@ -209,6 +209,8 @@ int main(void) {
         //MPI_Barrier(MPI_COMM_WORLD);
 
         MPI_Bcast(&nodes,1, MPI_INT, 0, MPI_COMM_WORLD);
+
+	MPI_Bcast(&sink,1, MPI_INT, 0, MPI_COMM_WORLD);
 
         //MPI_Barrier(MPI_COMM_WORLD);
 
@@ -343,21 +345,10 @@ int main(void) {
 
     else{
 
-        
-
-        struct timeval start, end;
-
-        gettimeofday(&start, NULL);
-
-        
 
         // benchmark code
 
 	//Initialize excess map
-
-        
-
-        
 
 #ifdef DEBUG
 
@@ -373,7 +364,7 @@ int main(void) {
 
         ifstream f;		
 
-        f.open("small-graph.txt");
+        f.open("large-graph.txt");
 
         if(!f){
 
@@ -383,11 +374,11 @@ int main(void) {
 
         }
 
-	cout << "File opened \n";
+	//cout << "File opened \n";
 
         f >> nodes;
 
-	cout << "Nodes " << nodes;
+	cout << "Nodes " << nodes << "\n";
 
 	excess = (double*) calloc(nodes, sizeof(double));
 
@@ -401,11 +392,15 @@ int main(void) {
 
         flow = alloc_2d_int(nodes, nodes);
 
-	height[source] = nodes;	
+	
         
 	f >> edges;
 
-        f >> n1 >> n2 >> capacityValue;
+	f >> source;
+
+	f >> sink;
+
+	f >> n1 >> n2 >> capacityValue;
 
         while(!f.eof())
 
@@ -417,10 +412,16 @@ int main(void) {
 
         }
 
+#ifdef DEBUG
 	cout << "File read \n";
-
+#endif
         f.close();
+	
+	 struct timeval start, end;
 
+        gettimeofday(&start, NULL);
+
+	height[source] = nodes;	
 
         for (int i = 0, p = 0; i < nodes; i++){
 
@@ -442,17 +443,12 @@ int main(void) {
 
         cout<<"Master:Initializing capacity and flow matrix"<<endl;
 
-#endif
-
-        
-
-        
-
-        
-
         printf("Capacity:\n");
 
         printMatrix(capacity,nodes);
+
+
+#endif
 
         //printMatrix(flow);
 
@@ -491,15 +487,18 @@ int main(void) {
 
         //Broadcast capacity and preflow matrix to all slaves
 
-        
+#ifdef DEBUG        
 
         printf("Flows:\n");
 
         printMatrix(flow,nodes);
 
+#endif
         //MPI_Barrier(MPI_COMM_WORLD);
 
-        MPI_Bcast(&nodes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&nodes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+	MPI_Bcast(&sink, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
         //MPI_Barrier(MPI_COMM_WORLD);
 
@@ -560,7 +559,7 @@ int main(void) {
 	
             double receivedExcess[2];         
 
-            MPI_Recv(receivedExcess, 2, MPI_DOUBLE, got, 4 ,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+            MPI_Recv(receivedExcess, 2, MPI_DOUBLE, MPI_ANY_SOURCE, 4 ,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 
             int ndex = (int)receivedExcess[0];
 
@@ -575,7 +574,7 @@ int main(void) {
 #endif
 	   double receivedFlow[nodes];
 
-            MPI_Recv(receivedFlow,nodes, MPI_DOUBLE, got, 5, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+            MPI_Recv(receivedFlow,nodes, MPI_DOUBLE, MPI_ANY_SOURCE, 5, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 
             //flow[ndex] = receivedFlow;
 
@@ -641,6 +640,7 @@ int main(void) {
         cout << "Maxflow is  " << maxflow<<endl;
 
         
+#ifdef DEBUG
 
         for(int j = 0; j < nodes; j++) {
 
@@ -653,6 +653,8 @@ int main(void) {
         cout << "Flow \n";
 
         printMatrix(flow,nodes);
+
+#endif
 
 	gettimeofday(&end, NULL);
 
